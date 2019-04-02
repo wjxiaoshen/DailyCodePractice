@@ -1,0 +1,194 @@
+ https://www.geeksforgeeks.org/minimum-number-platforms-required-railwaybus-station/       
+ Given arrival and departure times of all trains that reach a railway station, find the minimum number of platforms required for the railway station so that no train waits.
+We are given two arrays which represent arrival and departure times of trains that stop
+
+Examples:
+
+Input:  arr[]  = {9:00,  9:40, 9:50,  11:00, 15:00, 18:00}
+        dep[]  = {9:10, 12:00, 11:20, 11:30, 19:00, 20:00}
+Output: 3
+There are at-most three trains at a time (time between 11:00 to 11:20)
+We can solve the above problem in O(nLogn) time. The idea is to consider all events in sorted order. Once we have all events in sorted order, we can trace the number of trains at any time keeping track of trains that have arrived, but not departed.
+All events sorted by time.
+Total platforms at any time can be obtained by subtracting total 
+departures from total arrivals by that time.
+ Time     Event Type     Total Platforms Needed at this Time                               
+ 9:00       Arrival                  1
+ 9:10       Departure                0
+ 9:40       Arrival                  1
+ 9:50       Arrival                  2
+ 11:00      Arrival                  3 
+ 11:20      Departure                2
+ 11:30      Departure                1
+ 12:00      Departure                0
+ 15:00      Arrival                  1
+ 18:00      Arrival                  2 
+ 19:00      Departure                1
+ 20:00      Departure                0
+
+Minimum Platforms needed on railway station = Maximum platforms 
+                                              needed at any time 
+                                           = 3  
+    def findPlatform(arr, dep, n):
+        arr.sort()
+        dep.sort()
+        
+        plat_needed = 1
+        result = 1
+        i = 1
+        j = 0
+        
+        while (i < n and j < n):
+        
+            if (arr[i] < dep[j]):
+                plat_needed += 1
+                i += 1
+                
+                if(plat_needed > result):
+                    result = plat_needed
+                    
+            else:
+                plat_needed -= 1
+                j += 1
+
+    return result
+    
+    #test code
+    arr = [900, 940, 950, 1100, 1500, 1800] 
+    dep = [910, 1200, 1120, 1130, 1900, 2000] 
+    n = len(arr)
+    print("Minimum Number of Platforms Required = ", findPlatform(arr, dep, n))
+
+---------------Similar problem will be meeting room problem--------------
+Question 1
+Given an array of meeting time intervals consisting of start and end times 
+[[s1,e1],[s2,e2],...] (si < ei), find the minimum number of conference rooms required.
+
+For example,
+Given [[0, 30],[5, 10],[15, 20]],
+return 2.
+
+Solution
+The idea is to group those non-overlapping meetings in the same room and 
+then count how many rooms we need. 
+
+bool myComp(const Interval &a, const Interval &b){
+    return (a.start<b.start);
+}
+class Solution {
+public:
+    int minMeetingRooms(vector<Interval>& intervals) {
+        int rooms = 0;
+        priority_queue<int> pq;//prioritize earlier ending time
+        sort(intervals.begin(), intervals.end(), myComp);
+        for(int i=0; i<intervals.size(); ++i){
+            while(!pq.empty() && -pq.top()<intervals[i].start) pq.pop();
+            pq.push(-intervals[i].end);
+            rooms = max(rooms, (int)pq.size());
+        }
+        return rooms;
+    }
+};
+another solution: for each group of non-overlapping intervals, we just need 
+to store the last added one instead of the full list. So we could use a 
+vector < Interval > instead of vector < vector < Interval >> in C++. The code is now as follows.
+class Solution {
+public:
+    int minMeetingRooms(vector<Interval>& intervals) {
+        sort(intervals.begin(), intervals.end(), compare);
+        vector<Interval> rooms;
+        int n = intervals.size();
+        for (int i = 0; i < n; i++) {
+            int idx = findNonOverlapping(rooms, intervals[i]);
+            if (rooms.empty() || idx == -1)
+                rooms.push_back(intervals[i]);
+            else rooms[idx] = intervals[i];
+        }
+        return (int)rooms.size();
+    }
+private:
+    static bool compare(Interval& interval1, Interval& interval2) {
+        return interval1.start < interval2.start;
+    }
+    int findNonOverlapping(vector<Interval>& rooms, Interval& interval) {
+        int n = rooms.size();
+        for (int i = 0; i < n; i++)
+            if (interval.start >= rooms[i].end)
+                return i;
+        return -1;
+    }
+};
+another smart solution: http://tiancao.me/Leetcode-Unlocked/LeetCode%20Locked/c1.6.html
+
+class Solution {
+public:
+    int minMeetingRooms(vector<Interval>& intervals){
+        // Time O(NlogN)
+        map<int, int> mp; // key:time, val:+1 start, -1 end
+        for (int i = 0; i < intervals.size(); ++i) {
+            mp[intervals[i].start]++;
+            mp[intervals[i].end]--;
+        }
+        int cnt = 0; maxcnt = 0;
+        for (auto it = mp.begin(); it != mp.end(); ++it) {
+            cnt += it->second;
+            maxcnt = max(maxcnt, cnt);
+        }
+        return maxcnt;
+    }
+};
+---------------------------------------------
+https://www.geeksforgeeks.org/activity-selection-problem-greedy-algo-1/
+Example 1 : Consider the following 3 activities sorted by
+by finish time.
+     start[]  =  {10, 12, 20};
+     finish[] =  {20, 25, 30};
+A person can perform at most two activities. The 
+maximum set of activities that can be executed 
+is {0, 2} [ These are indexes in start[] and 
+finish[] ]
+
+Example 2 : Consider the following 6 activities 
+sorted by by finish time.
+     start[]  =  {1, 3, 0, 5, 8, 5};
+     finish[] =  {2, 4, 6, 7, 9, 9};
+A person can perform at most four activities. The 
+maximum set of activities that can be executed 
+is {0, 1, 3, 4} [ These are indexes in start[] and 
+finish[] ]
+
+"""The following implementation assumes that the activities 
+are already sorted according to their finish time"""
+  
+"""Prints a maximum set of activities that can be done by a 
+single person, one at a time"""
+# n --> Total number of activities 
+# s[]--> An array that contains start time of all activities 
+# f[] --> An array that contains finish time of all activities 
+  
+def printMaxActivities(s , f ): 
+    n = len(f) 
+    print "The following activities are selected"
+  
+    # The first activity is always selected 
+    i = 0
+    print i, 
+  
+    # Consider rest of the activities 
+    for j in xrange(n): 
+  
+        # If this activity has start time greater than 
+        # or equal to the finish time of previously 
+        # selected activity, then select it 
+        if s[j] >= f[i]: 
+            print j, 
+            i = j 
+  
+# Driver program to test above function 
+s = [1 , 3 , 0 , 5 , 8 , 5] 
+f = [2 , 4 , 6 , 7 , 9 , 9] 
+printMaxActivities(s , f) 
+  
+# This code is contributed by Nikhil Kumar Singh 
+
+
